@@ -20,10 +20,11 @@
     <div id="q-app">
         <q-layout>
         <q-page-container>
-        <q-page class="flex flex-center black absolute-top">
-            <canvas id="render-canvas" class="absolute-top full-width full-height"></canvas>
+        <q-page class="flex flex-center black fixed-top">
+            <canvas id="chainonlycanvas" class="absolute-top full-width full-height"></canvas>
+            <!-- <q-scroll-observer @scroll="onScroll"></q-scroll-observer> -->
         </q-page>
-        <q-page class="flex flex-center">
+        <q-page class="flex flex-center" id="page1">
             <div style=" width: 100vw;" class="text-center flex flex-center">
                 {% if page.header.overlay_color or page.header.overlay_image or page.header.image %}
                 {% include page__hero.html %}
@@ -32,56 +33,34 @@
               {% endif %}
             </div>
         </q-page>
-        <q-page class="flex flex-center">
-            {% include feature_row id="feature_row5" type="center" %}
+        <q-page class="flex flex-center" id="page2">
+            {% include feature_row id="braking_mechanism" type="center" %}
         </q-page>
-    </q-layout>
-    </q-page-container>
-        <div class="q-ma-md">
-          Fork and make your own!
-          Do NOT use self-closing tags here on Codepen.
-        </div>
-        
-        <div class="q-ma-md">
-          <q-btn label="Notify" color="primary" @click="notify"></q-btn>
-        </div>
+        <q-page class="flex flex-center" id="page3">
+            {% include feature_row id="parallel_brake" type="center" %}
+        </q-page>
+        <q-page class="flex flex-center" id="page4">
+            {% include feature_row id="series_brake" type="center" %}
+        </q-page>
+        <q-page class="flex flex-center" id="page5">
+            {% include feature_row id="parallel_brake_actuator" type="center" %}
+        </q-page>
+        <q-page class="flex flex-center" id="page6">
+            {% include feature_row id="series_brake_actuator" type="center" %}
+        </q-page>
+      <q-page class="flex flex-center" id="page7">
+            {% include feature_row id="farmbots" type="center" %}
+        </q-page>
+      <q-page class="flex flex-center" id="page8">
+            {% include feature_row id="woodbots" type="center" %}
+        </q-page>
+      <q-page class="flex flex-center" id="page9">
+            {% include feature_row id="constructionbots" type="center" %}
+        </q-page>
       
-        <div class="q-ma-md">
-          Running Quasar v{{ version }}
-        </div>
-      </div>
-    <div class="initial-content">
-<!--        
-      {% if page.header.overlay_color or page.header.overlay_image or page.header.image %}
-        {% include page__hero.html %}
-      {% elsif page.header.video.id and page.header.video.provider %}
-        {% include page__hero_video.html %}
-      {% endif %}
-       -->
-      <div id="main" role="main">
-        <!-- <article class="splash" itemscope itemtype="https://schema.org/CreativeWork">
-          {% if page.title %}<meta itemprop="headline" content="{{ page.title | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
-          {% if page.excerpt %}<meta itemprop="description" content="{{ page.excerpt | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
-          {% if page.date %}<meta itemprop="datePublished" content="{{ page.date | date_to_xmlschema }}">{% endif %}
-          {% if page.last_modified_at %}<meta itemprop="dateModified" content="{{ page.last_modified_at | date_to_xmlschema }}">{% endif %}
-       -->
-          <section class="page__content" itemprop="text">
-            {{ content }}
-          </section>
-        </article>
-      </div>
-      <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2124139631235014" crossorigin="anonymous"></script>
-        <div align="center" style="margin: 1em 0;">
-        <ins class="adsbygoogle"
-             style="display:block; border-bottom: initial;"
-             data-ad-client="ca-pub-7328585512091257"
-             data-ad-slot="3049671934"
-             data-ad-format="auto"></ins>
-        </div>
-        <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-      </script>
-    </div>
+      </q-page-container>
+      
+    </q-layout>
 
     {% if site.search == true %}
       <div class="search-content">
@@ -103,6 +82,8 @@
     <script src="{{ site.url }}{{ site.baseurl }}//assets/js/chainbrake.js"></script>
     <script>
       var chainbrake = new chainBrakeSimulator()
+      var chainbrake1 = new chainBrakeSimulator()
+      var chainbrake2 = new chainBrakeSimulator()
       new Vue({
   el: '#q-app',
   data: function () {
@@ -112,33 +93,54 @@
   },
   created: function() {
       setTimeout(()=>{
-        chainbrake.init(document.getElementById("render-canvas"), "CHAINONLY")
-    // var canvas = document.getElementById("render-canvas");
-    // console.log(canvas)
-    // var engine = new BABYLON.Engine(canvas);
-    // console.log(engine)
-    // var scene = new BABYLON.Scene(engine);
-    // scene.clearColor = new BABYLON.Color3(0.8, 0.8, 0.8);
-    // var camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 0, -10), scene);
-    // var light = new BABYLON.PointLight("light", new BABYLON.Vector3(10, 10, 0), scene);
+        chainbrake.init(document.getElementById("chainonlycanvas"), "CHAINONLY")
+        chainbrake1.init(document.getElementById("singlebrakeonly"), "CHAINONLY")
+        chainbrake2.init(document.getElementById("doubleverticalbrake"), "CHAINONLY")
 
-    // var box = BABYLON.Mesh.CreateBox("box", 2, scene);
-    // box.rotation.x = -0.2;
-    // box.rotation.y = -0.4;
+        let pagesTop = []
+  // pagesTop[0] = document.getElementById("page1").offsetTop
+  // pagesTop[1] = document.getElementById("page2").offsetTop
+  // console.log(getVerticalScrollPosition(document.getElementById("page2")), pagesTop)
+        let i = 1;
+        while(true){
+          if(document.getElementById(`page${i}`) != null){
+            pagesTop.push(document.getElementById(`page${i}`).offsetTop)
+            i++
+          }else{
+            break;
+          }
+        }
+        const { getVerticalScrollPosition, setVerticalScrollPosition } = Quasar.scroll
 
-    // var boxMaterial = new BABYLON.StandardMaterial("material", scene);
-    // boxMaterial.emissiveColor = new BABYLON.Color3(0, 0.58, 0.86);
-    // box.material = boxMaterial;
+        setInterval(()=>{
+          let windowHeight = window.innerHeight
+          let scrollPos = getVerticalScrollPosition(window)
+          let pos = 0;
+          for(let i in pagesTop.reverse()){
+            if(pagesTop[i] < scrollPos){
+              if(scrollPos -pagesTop[i] > windowHeight/2){
+                window.scrollTo({ top: pagesTop[i] + windowHeight, behavior: 'smooth' });
+              }
+            }
+          }
+  console.log(getVerticalScrollPosition(window))
+  // let pagesTop = [0,0]
+  // pagesTop[0] = document.getElementById("page1").offsetTop
+  // pagesTop[1] = document.getElementById("page2").offsetTop
+  console.log(getVerticalScrollPosition(document.getElementById("page2")), pagesTop)
+  // window.scrollTo({ top: 0, behavior: 'smooth' });
+},1000)
 
-    // var renderLoop = function () {
-    //     scene.render();
-    // };
-    // engine.runRenderLoop(renderLoop);
 },4000)
+
   },
   methods: {
   	notify: function () {
       this.$q.notify('Running on Quasar v' + this.$q.version)
+    },
+    onscroll: function(){
+      const { getScrollTarget } = Quasar.scroll
+        console.log(getScrollTarget())
     }
 	}
 })

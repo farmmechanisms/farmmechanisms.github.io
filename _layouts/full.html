@@ -20,8 +20,8 @@
     <div id="q-app">
         <q-layout>
         <q-page-container>
-        <q-page class="flex flex-center black fixed-top">
-            <canvas id="chainonlycanvas" class="absolute-top full-width full-height"></canvas>
+        <q-page class="flex flex-center black fixed-top" id="canvasParent">
+            <!-- <canvas id="canvasParent" class="absolute-top full-width full-height"></canvas> -->
             <!-- <q-scroll-observer @scroll="onScroll"></q-scroll-observer> -->
         </q-page>
         <q-page class="flex flex-center" id="page1">
@@ -88,14 +88,14 @@
   el: '#q-app',
   data: function () {
     return {
-      version: Quasar.version
+      simTypes: ["CHAINONLY", "BRAKINGMECHANISM", "PARALLELBRAKE","SERIESBRAKE"]
     }
   },
   created: function() {
       setTimeout(()=>{
-        chainbrake.init(document.getElementById("chainonlycanvas"), "CHAINONLY")
-        chainbrake1.init(document.getElementById("singlebrakeonly"), "CHAINONLY")
-        chainbrake2.init(document.getElementById("doubleverticalbrake"), "CHAINONLY")
+        chainbrake.init(document.getElementById("canvasParent"), "CHAINONLY")
+        // chainbrake1.init(document.getElementById("singlebrakeonly"), "CHAINONLY")
+        // chainbrake2.init(document.getElementById("doubleverticalbrake"), "CHAINONLY")
 
         let pagesTop = []
   // pagesTop[0] = document.getElementById("page1").offsetTop
@@ -112,24 +112,19 @@
         }
         const { getVerticalScrollPosition, setVerticalScrollPosition } = Quasar.scroll
 
+        let currentPageindex = 0
+        // let reversegPagesTop = pagesTop.reverse()
         setInterval(()=>{
           let windowHeight = window.innerHeight
           let scrollPos = getVerticalScrollPosition(window)
           let pos = 0;
-          for(let i in pagesTop.reverse()){
-            if(pagesTop[i] < scrollPos){
-              if(scrollPos -pagesTop[i] > windowHeight/2){
-                window.scrollTo({ top: pagesTop[i] + windowHeight, behavior: 'smooth' });
-              }
+          for(let i in pagesTop){
+            if(Math.abs(pagesTop[i] - scrollPos) <= windowHeight * 0.4 && parseInt(i) !== currentPageindex){
+              currentPageindex = parseInt(i)
+              chainbrake.init(document.getElementById("canvasParent"), this.simTypes[currentPageindex])
             }
           }
-  console.log(getVerticalScrollPosition(window))
-  // let pagesTop = [0,0]
-  // pagesTop[0] = document.getElementById("page1").offsetTop
-  // pagesTop[1] = document.getElementById("page2").offsetTop
-  console.log(getVerticalScrollPosition(document.getElementById("page2")), pagesTop)
-  // window.scrollTo({ top: 0, behavior: 'smooth' });
-},1000)
+      },100)
 
 },4000)
 

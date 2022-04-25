@@ -13,6 +13,7 @@ class chainBrakeSimulator {
     }
     materials = {}
     initialCamRadius = 2000
+    intervals = {}
     constructor() {
     }
 
@@ -42,7 +43,7 @@ class chainBrakeSimulator {
         wood1Material.uScale = 1000;
         wood1Material.vScale = 10;
         this.materials.wood1Material = wood1Material
-        
+
 
 
         let blackMaterial = new BABYLON.StandardMaterial("", scene);
@@ -162,7 +163,7 @@ class chainBrakeSimulator {
             R: Math.abs(chainOuterLink1End.position.y)
         }
     }
-    
+
     createRope() {
         let scene = this.scene
         let cable = BABYLON.MeshBuilder.CreateCylinder(
@@ -170,7 +171,7 @@ class chainBrakeSimulator {
             height: 2000,
             diameter: this.chainDimensions.linkWidth * 2
         });
-        cable.rotation.z = Math.PI/2
+        cable.rotation.z = Math.PI / 2
         cable.material = this.materials.wood1Material
     }
 
@@ -182,15 +183,15 @@ class chainBrakeSimulator {
         y0 = R * Math.cos(degree2Pi(theta))
         let x0 = 0
         let X0 = x0, Y0 = R//y0
-        let lastX =  links.length * 2 * R * Math.sin(degree2Pi(theta))
-        let yOffset =  -(R * Math.cos(degree2Pi(theta)) - this.chainDimensions.linkWidth - this.chainDimensions.linkWidth/4)
+        let lastX = links.length * 2 * R * Math.sin(degree2Pi(theta))
+        let yOffset = -(R * Math.cos(degree2Pi(theta)) - this.chainDimensions.linkWidth - this.chainDimensions.linkWidth / 4)
         // let yOffset =  0//-this.chainDimensions.linkWidth
         // console.log({ X0, Y0, R })
         for (let i in this.links) {
             let thetaInner = (parseInt(i) % 2 == 1) ? -theta : theta
             links[i].chainLink.setPivotPoint(new BABYLON.Vector3(X0, Y0, 0));
             links[i].chainLink.rotation.z += degree2Pi(thetaInner) - links[i].chainLink.rotation.z
-            
+
             if (parseInt(i) % 2 == 0) {
                 links[i].chainRivets.setPivotPoint(new BABYLON.Vector3(X0, Y0, 0));
                 links[i].chainBearings.setPivotPoint(new BABYLON.Vector3(X0, Y0, 0));
@@ -200,19 +201,19 @@ class chainBrakeSimulator {
                 links[i].chainBearings.setPivotPoint(new BABYLON.Vector3(0, 0, 0));
                 links[i].chainRivets.position.y = yOffset
                 links[i].chainBearings.position.y = yOffset
-                links[i].chainRivets.position.x = R * Math.sin(degree2Pi(theta)) - lastX/2
-                links[i].chainBearings.position.x =  R * Math.sin(degree2Pi(theta)) - lastX/2
+                links[i].chainRivets.position.x = R * Math.sin(degree2Pi(theta)) - lastX / 2
+                links[i].chainBearings.position.x = R * Math.sin(degree2Pi(theta)) - lastX / 2
             }
-            
+
             links[i].chainLink.setPivotPoint(new BABYLON.Vector3(0, 0, 0));
             links[i].chainLink.position.y = yOffset
-            links[i].chainLink.position.x =  R * Math.sin(degree2Pi(theta)) - lastX/2
-            if(parseInt(i)>0){
-                try{
-                links[i].chainLink.position.x +=  parseInt(i) * 2 * R * Math.sin(degree2Pi(theta))
-                links[i].chainRivets.position.x +=  parseInt(i) * 2 * R * Math.sin(degree2Pi(theta))
-                links[i].chainBearings.position.x +=  parseInt(i) * 2 * R * Math.sin(degree2Pi(theta))
-                }catch(err){
+            links[i].chainLink.position.x = R * Math.sin(degree2Pi(theta)) - lastX / 2
+            if (parseInt(i) > 0) {
+                try {
+                    links[i].chainLink.position.x += parseInt(i) * 2 * R * Math.sin(degree2Pi(theta))
+                    links[i].chainRivets.position.x += parseInt(i) * 2 * R * Math.sin(degree2Pi(theta))
+                    links[i].chainBearings.position.x += parseInt(i) * 2 * R * Math.sin(degree2Pi(theta))
+                } catch (err) {
 
                 }
             }
@@ -222,13 +223,13 @@ class chainBrakeSimulator {
             // y0 = 2 * R * Math.cos(degree2Pi(theta))
             // // x0 += Math.round(2 * R * Math.sin(degree2Pi(theta)))
             // x0 += 2 * R * Math.sin(degree2Pi(theta))
-            
+
             // }
         }
     }
-    
 
-    createChain() {
+
+    createChain(simulate = false) {
         let links = []
         let numLinks = 10
         let numLink = 0
@@ -241,24 +242,51 @@ class chainBrakeSimulator {
             if (numLink === numLinks) break
         }
         this.links = links
-        // this.positionLinks(60)//30 degrees
-
         let thetaMin = 10, thetaMax = 60, theta = thetaMin
         let interInterval = 1
         let interval = interInterval
         theta = 60
         this.positionLinks(theta)
-        setInterval(()=>{
-            this.positionLinks(theta)
-            theta += interval
-            if(theta>=thetaMax)interval = -interInterval
-            if(theta <= thetaMin)interval = interInterval
-        },100)
-
+        if (simulate) {
+            let chainSiminterval = setInterval(() => {
+                this.positionLinks(theta)
+                theta += interval
+                if (theta >= thetaMax) interval = -interInterval
+                if (theta <= thetaMin) interval = interInterval
+            }, 100)
+            console.log("SETTING INTERVAL......", "chainSim")
+            this.intervals["chainSim"] = chainSiminterval
+        }
+        return this.links
     }
 
     initChainOnly() {
-        let canvas = this.canvas
+        this.createChain(true)
+        this.createRope()
+    }
+
+    initBreakingMechanism() {
+        let chain1Links = this.createChain(false)
+        let chain2Links = this.createChain(false)
+    }   
+
+
+    init(elem, simulationType) {
+        let children = elem.childNodes
+        for (let j in children) {
+            if (children[j].localName === "canvas") elem.removeChild(children[j]);
+        }
+        let canvas = document.createElement('canvas');
+        canvas.className = "absolute-top full-width full-height"
+        elem.append(canvas);
+        this.canvas = canvas
+        for (let i of Object.keys(this.intervals)) {
+            clearInterval(this.intervals[i])
+        }
+        try {
+            this.scene.dispose()
+        } catch (error) { }
+
         let engine = new BABYLON.Engine(canvas, true, {
             preserveDrawingBuffer: true,
             stencil: true
@@ -268,34 +296,26 @@ class chainBrakeSimulator {
         this.scene = scene
         // scene.clearColor = new BABYLON.Color4
         scene.clearColor = new BABYLON.Color3(0.8, 0.8, 0.8);
-        // var engine = new BABYLON.Engine(canvas);
-        // var scene = new BABYLON.Scene(engine);
-        // scene.clearColor = new BABYLON.Color3(0.8, 0.8, 0.8);
-        // var camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 0, -10), scene);
-        // var light = new BABYLON.PointLight("light", new BABYLON.Vector3(10, 10, 0), scene);
-        // this.scene = scene
         this.createCamera(scene)
         this.createMaterials()
         this.showAxis(100)
-        this.createChain()
-        this.createRope()
 
-
-        var renderLoop = function () {
-            scene.render();
-        };
-        engine.runRenderLoop(renderLoop);
-
-    }
-
-
-    init(canvas, simulationType) {
-        this.canvas = canvas
         switch (simulationType) {
             case "CHAINONLY":
                 this.initChainOnly()
                 break
+            case "BRAKINGMECHANISM":
+                this.initBreakingMechanism()
+                break
+            case "PARALLELBRAKE":
+                this.initChainOnly()
+                break
         }
+        console.log(simulationType)
+        var renderLoop = function () {
+            scene.render();
+        };
+        engine.runRenderLoop(renderLoop);
     }
 
     createCamera = (scene) => {

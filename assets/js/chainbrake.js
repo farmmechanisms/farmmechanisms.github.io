@@ -9,7 +9,12 @@ class chainBrakeSimulator {
         linkWidth: 20,
         linkThickness: 5,
         chainRivetLength: 100,
-        chainRivetDia: 4
+        chainRivetDia: 4,
+        board:{
+            length: 1500,
+            width:  300,
+            thickness: 50
+        }
     }
     materials = {}
     initialCamRadius = 2000
@@ -36,13 +41,23 @@ class chainBrakeSimulator {
 
         let wood1Material = new BABYLON.StandardMaterial("", scene);
         wood1Material.diffuseTexture = new BABYLON.Texture(
-            // "/textures/wood.jpg",
-            "/textures/fur.jpg",
+            "/textures/wood.jpg",
+            // "/textures/fur.jpg",
             scene
         );
         wood1Material.uScale = 1000;
         wood1Material.vScale = 10;
         this.materials.wood1Material = wood1Material
+
+
+        let ropeMaterial = new BABYLON.StandardMaterial("", scene);
+        ropeMaterial.diffuseTexture = new BABYLON.Texture(
+            "/textures/fur.jpg",
+            scene
+        );
+        ropeMaterial.uScale = 1000;
+        ropeMaterial.vScale = 10;
+        this.materials.ropeMaterial = ropeMaterial
 
 
 
@@ -54,7 +69,7 @@ class chainBrakeSimulator {
         this.materials.blackMaterial = blackMaterial
     }
 
-    createClosedLink(linkNumber) {
+    createClosedLink(linkNumber, doubleEnd=0, bushing = 0) {
         let scene = this.scene
         const chainOuterLink1FrontBar = BABYLON.MeshBuilder.CreateBox("verticalLeg1", { height: this.chainDimensions.linkLength, width: this.chainDimensions.linkWidth, depth: this.chainDimensions.linkThickness });
         let chainOuterLink1End = BABYLON.MeshBuilder.CreateCylinder(
@@ -114,20 +129,93 @@ class chainBrakeSimulator {
             chainBearing2
         ]);
 
-
-        chainLink.material = this.materials.aluminiumMaterial
+       
+        let ropeKnot = false
         chainRivets.material = this.materials.blackMaterial
+        if(doubleEnd != 0){
+            let doubleEndOffset = -((Math.abs(chainOuterLink1Back.position.z - chainOuterLink1Front.position.z))  + this.chainDimensions.linkThickness/2)
+            doubleEndOffset = doubleEnd/(Math.abs(doubleEnd)) * doubleEndOffset
+            let tmp = chainLink.clone("chainLinkDouble")
+            tmp.position.z = doubleEndOffset
+            chainLink = BABYLON.Mesh.MergeMeshes([
+                chainLink,
+                tmp
+            ]);
+            
+            tmp = chainBearings.clone("chainBearingsDouble")
+            tmp.position.z = doubleEndOffset
+            chainBearings = BABYLON.Mesh.MergeMeshes([
+                chainBearings,
+                tmp
+            ]);
+
+            ropeKnot = BABYLON.MeshBuilder.CreateCylinder(
+                "ropeKnot", {
+                height: (Math.abs(chainOuterLink1Back.position.z - chainOuterLink1Front.position.z) - this.chainDimensions.linkThickness - 1)/4,//-this.chainDimensions.linkLength/2) -5,
+                diameter: (this.chainDimensions.linkWidth - 4)*4
+            });
+            
+
+            tmp = chainRivets.clone("chainRivetsDouble")
+            tmp.position.z = doubleEndOffset
+            ropeKnot.rotation.x = Math.PI/2
+            ropeKnot.position.y = chainRivet1.position.y
+            ropeKnot.position.z = tmp.position.z
+            chainRivets = BABYLON.Mesh.MergeMeshes([
+                chainRivets,
+                tmp
+            ]);
+            tmp = new BABYLON.TransformNode();
+            chainRivets.material = this.materials.blackMaterial
+            chainRivets.parent = tmp
+            ropeKnot.parent = tmp
+            chainRivets = tmp
+            this.knotCenterZ = tmp.position.z
+        }   
+
+        if (bushing !== 0){
+            let washerHeight = (Math.abs(chainOuterLink1Back.position.z - chainOuterLink1Front.position.z) - this.chainDimensions.linkThickness )/4
+            let washer = BABYLON.MeshBuilder.CreateCylinder(
+                "washer", {
+                height: washerHeight,
+                diameter: this.chainDimensions.linkWidth - 4
+            });
+            washer.rotation.x = Math.PI / 2
+            washer.position.y = chainRivet2.position.y
+            let washerOffset = chainOuterLink1Front.position.z - this.chainDimensions.linkThickness/2 - washerHeight/2
+            this.endOfWasher = washerOffset - (this.chainDimensions.linkWidth - 4)/2
+            // washerOffset = -50
+            washer.position.z = washerOffset * bushing/(Math.abs(bushing))
+            if(Math.abs(bushing) ==2){
+                let washer1 = washer.clone("washer1")
+                washer1.position.y = chainRivet1.position.y
+                chainBearings = BABYLON.Mesh.MergeMeshes([
+                    chainBearings,
+                    washer,
+                    washer1
+                ]);
+            }else{
+                chainBearings = BABYLON.Mesh.MergeMeshes([
+                    chainBearings,
+                    washer
+                ]);
+            }
+            
+        }
+        chainLink.material = this.materials.aluminiumMaterial
+       
         chainBearings.material = this.materials.woodMaterial
         return {
             chainLink,
             chainRivets,
             chainBearings,
             y0: chainOuterLink1End.position.y,
-            R: Math.abs(chainOuterLink1End.position.y)
+            R: Math.abs(chainOuterLink1End.position.y),
+            ropeKnot
         }
     }
 
-    createOpenLink(linkNumber) {
+    createOpenLink(linkNumber, doubleEnd) {
         let scene = this.scene
         const chainOuterLink1FrontBar = BABYLON.MeshBuilder.CreateBox("verticalLeg1", { height: this.chainDimensions.linkLength, width: this.chainDimensions.linkWidth, depth: this.chainDimensions.linkThickness });
         let chainOuterLink1End = BABYLON.MeshBuilder.CreateCylinder(
@@ -154,6 +242,17 @@ class chainBrakeSimulator {
             chainOuterLink1Back
         ]);
 
+        if(doubleEnd != 0){
+            let doubleEndOffset = chainOuterLink1End.position.y + this.chainDimensions.linkThickness/2
+            doubleEndOffset = doubleEnd/(Math.abs(doubleEnd)) * doubleEndOffset
+            let tmp = chainLink.clone("chainLinkDouble")
+            tmp.position.z = doubleEndOffset
+            chainLink = BABYLON.Mesh.MergeMeshes([
+                chainLink,
+                tmp
+            ]);
+        }
+
 
         // chainLink.material = this.materials.wood1Material
         chainLink.material = this.materials.aluminiumMaterial
@@ -172,13 +271,13 @@ class chainBrakeSimulator {
             diameter: this.chainDimensions.linkWidth * 2
         });
         cable.rotation.z = Math.PI / 2
-        cable.material = this.materials.wood1Material
+        cable.material = this.materials.ropeMaterial
     }
 
-    positionLinks(theta) {
-        let links = this.links
+    positionLinks(links, theta, offset=false) {
+        let chainWhole = new BABYLON.TransformNode();
         let origin = [0, 0, 0]
-        let { y0, R } = this.links[0]
+        let { y0, R } = links[0]
         // y0 = Math.round(R * Math.cos(degree2Pi(theta)))
         y0 = R * Math.cos(degree2Pi(theta))
         let x0 = 0
@@ -187,7 +286,7 @@ class chainBrakeSimulator {
         let yOffset = -(R * Math.cos(degree2Pi(theta)) - this.chainDimensions.linkWidth - this.chainDimensions.linkWidth / 4)
         // let yOffset =  0//-this.chainDimensions.linkWidth
         // console.log({ X0, Y0, R })
-        for (let i in this.links) {
+        for (let i in links) {
             let thetaInner = (parseInt(i) % 2 == 1) ? -theta : theta
             links[i].chainLink.setPivotPoint(new BABYLON.Vector3(X0, Y0, 0));
             links[i].chainLink.rotation.z += degree2Pi(thetaInner) - links[i].chainLink.rotation.z
@@ -201,74 +300,129 @@ class chainBrakeSimulator {
                 links[i].chainBearings.setPivotPoint(new BABYLON.Vector3(0, 0, 0));
                 links[i].chainRivets.position.y = yOffset
                 links[i].chainBearings.position.y = yOffset
-                links[i].chainRivets.position.x = R * Math.sin(degree2Pi(theta)) - lastX / 2
-                links[i].chainBearings.position.x = R * Math.sin(degree2Pi(theta)) - lastX / 2
+                links[i].chainRivets.position.x = R * Math.sin(degree2Pi(theta))  - (!offset?(lastX / 2):-offset)
+                links[i].chainBearings.position.x = R * Math.sin(degree2Pi(theta))  - (!offset?(lastX / 2):-offset)
             }
 
             links[i].chainLink.setPivotPoint(new BABYLON.Vector3(0, 0, 0));
             links[i].chainLink.position.y = yOffset
-            links[i].chainLink.position.x = R * Math.sin(degree2Pi(theta)) - lastX / 2
+            links[i].chainLink.position.x = R * Math.sin(degree2Pi(theta)) - (!offset?(lastX / 2):-offset)
+            // links[i].chainLink.position.x = R * Math.sin(degree2Pi(theta)) - lastX / 2
             if (parseInt(i) > 0) {
                 try {
                     links[i].chainLink.position.x += parseInt(i) * 2 * R * Math.sin(degree2Pi(theta))
                     links[i].chainRivets.position.x += parseInt(i) * 2 * R * Math.sin(degree2Pi(theta))
                     links[i].chainBearings.position.x += parseInt(i) * 2 * R * Math.sin(degree2Pi(theta))
                 } catch (err) {
-
                 }
             }
-            // lastX = x0
-            // console.log({i, rsr: (parseInt(i)) * R})
-            // y0= Math.round(2 * R * Math.cos(degree2Pi(theta)))
-            // y0 = 2 * R * Math.cos(degree2Pi(theta))
-            // // x0 += Math.round(2 * R * Math.sin(degree2Pi(theta)))
-            // x0 += 2 * R * Math.sin(degree2Pi(theta))
-
-            // }
+            try{
+                links[i].chainLink.parent = chainWhole
+                links[i].chainRivets.parent = chainWhole
+                links[i].chainBearings.parent = chainWhole
+            }catch(err){}
+            // console.log("SETTING INTERVAL......", "chainSim", links[i].ropeKnot)
+        }
+        if(offset && offset > 0){
+            chainWhole.setPivotPoint(new BABYLON.Vector3(offset, 0, 0));
+            chainWhole.rotation.z = Math.PI
+            chainWhole.rotation.x = Math.PI
         }
     }
 
 
-    createChain(simulate = false) {
+    createChain(simulate = false, numLinks = 10, offset=false, theta=10, doubleEnd = 0, bushing = 0) {
         let links = []
-        let numLinks = 10
         let numLink = 0
         while (true) {
             if (++numLink % 2 != 0) {
-                links.push(this.createClosedLink(numLink))
+                console.log(doubleEnd?numLink===numLinks?true:false:false, doubleEnd)
+                // links.push(this.createClosedLink(numLink, doubleEnd!==0?numLink===numLinks?true:false:false))
+                links.push(this.createClosedLink(numLink, numLink===numLinks?doubleEnd:0, numLink===1?bushing:0))
             } else {
-                links.push(this.createOpenLink(numLink))
+                // links.push(this.createOpenLink(numLink,doubleEnd!==0?numLink===numLinks?true:false:false))
+                links.push(this.createOpenLink(numLink,numLink===numLinks?doubleEnd:0, numLink===1?bushing:0))
             }
             if (numLink === numLinks) break
         }
-        this.links = links
-        let thetaMin = 10, thetaMax = 60, theta = thetaMin
+        // this.links = links
+        let thetaMin = 10, thetaMax = 60
         let interInterval = 1
         let interval = interInterval
-        theta = 60
-        this.positionLinks(theta)
+       
+        this.positionLinks(links,theta, offset)
         if (simulate) {
             let chainSiminterval = setInterval(() => {
-                this.positionLinks(theta)
+                this.positionLinks(links,theta ,offset)
                 theta += interval
                 if (theta >= thetaMax) interval = -interInterval
                 if (theta <= thetaMin) interval = interInterval
             }, 100)
-            console.log("SETTING INTERVAL......", "chainSim")
             this.intervals["chainSim"] = chainSiminterval
         }
-        return this.links
+        return links
     }
 
     initChainOnly() {
-        this.createChain(true)
+        this.createChain(true, 11)
         this.createRope()
     }
 
+    positionBrakingMechanismLinks(links, offset) {
+       for (let i in links) {
+            links[i].chainLink.setPivotPoint(new BABYLON.Vector3(0, 0, 0));
+            links[i].chainLink.position.x += offset
+            try {
+                links[i].chainRivets.position.x += offset
+                links[i].chainBearings.position.x += offset
+            } catch (err) {
+
+            }
+        }
+    }
+
+    createBreakingMechanismBoard(){
+        const mechanismBoard = BABYLON.MeshBuilder.CreateBox("mechanismBoard", { height: this.chainDimensions.board.width, width: this.chainDimensions.board.length, depth: this.chainDimensions.board.thickness });
+        mechanismBoard.position.z = -(this.endOfWasher - this.chainDimensions.board.thickness/2)
+        mechanismBoard.material = this.materials.wood1Material
+    }
+
     initBreakingMechanism() {
-        let chain1Links = this.createChain(false)
-        let chain2Links = this.createChain(false)
-    }   
+        let chain1Links = this.createChain(true, 5, 600,    10,     -1, 1) // chain2
+        let chain2Links = this.createChain(true, 5, -600,   10,     1, -1) //chain1
+        let chain3Links = this.createChain(false, 1, -650,  0,      1, -2) //pulley1
+        let chain5Links = this.createChain(false, 1, 650,   0,      -1, 2) //pulley2
+        let chain4Links = this.createChain(false, 1, 0,     0,      0,  -2) //pulley
+        this.createBreakingMechanismBoard()
+        this.createRope()
+        let offset = this.chainDimensions.board.length/4
+        let knotPoints = []
+        for(let i in chain2Links){
+            if(chain2Links[i].ropeKnot){knotPoints.push(chain2Links[i].ropeKnot)
+            console.log("Rope1", chain2Links[i].ropeKnot)
+            }
+        } 
+        for(let i in chain3Links){
+            if(chain3Links[i].ropeKnot){knotPoints.push(chain3Links[i].ropeKnot)
+            console.log("Pulley1", chain3Links[i].ropeKnot)
+            }
+        } 
+        for(let i in chain1Links){
+            if(chain1Links[i].ropeKnot){knotPoints.push(chain1Links[i].ropeKnot)
+            console.log("Rope2", chain1Links[i].ropeKnot)
+            }
+        } 
+        for(let i in chain5Links){
+            if(chain5Links[i].ropeKnot){knotPoints.push(chain5Links[i].ropeKnot)
+            console.log("Pulley2")
+            }
+
+        }
+        knotPoints.map(point=>console.log("===>", point.position.z, point.position.y, point.position.x))
+        // console.log(knotPoints)
+        // this.positionBrakingMechanismLinks(chain1Links, -offset)
+        // this.positionBrakingMechanismLinks(chain2Links, offset)
+    }
 
 
     init(elem, simulationType) {
@@ -298,7 +452,7 @@ class chainBrakeSimulator {
         scene.clearColor = new BABYLON.Color3(0.8, 0.8, 0.8);
         this.createCamera(scene)
         this.createMaterials()
-        // this.showAxis(100)
+        this.showAxis(100)
 
         switch (simulationType) {
             case "CHAINONLY":
@@ -632,4 +786,3 @@ class chainBrakeSimulator {
 
 
 }
-

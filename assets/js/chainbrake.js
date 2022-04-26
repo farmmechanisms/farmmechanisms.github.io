@@ -298,7 +298,7 @@ class chainBrakeSimulator {
         scene.clearColor = new BABYLON.Color3(0.8, 0.8, 0.8);
         this.createCamera(scene)
         this.createMaterials()
-        this.showAxis(100)
+        // this.showAxis(100)
 
         switch (simulationType) {
             case "CHAINONLY":

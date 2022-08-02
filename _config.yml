@@ -11,7 +11,7 @@ minimal_mistakes_skin    : "default" # "air", "aqua", "contrast", "dark", "dirt"
 
 # Site Settings
 locale                   : "en-US"
-title                    : "ChainBrake"
+title                    : "BrianMechanism"
 title_separator          : "-"
 subtitle                 : "Cheapest Large Scale Fixed Robotics"
 name                     : &name "Brian Onang'o" # &name is a YAML anchor which can be *referenced later
@@ -19,9 +19,9 @@ description              : &description "The cheapest way to build large scale a
 startyear                : &startyear "2017"
 copyright                : &copyright "CSECO"
 copyrightsite            : &copyrightsite "https://www.cseco.co.ke"
-url                      : https://chainbrake.github.io # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
+url                      : https://brianmechanism.github.io # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 baseurl                  : "/" # the subpath of your site, e.g. "/blog"
-repository               : "chainbrake.github.io"
+repository               : "brianmechanism.github.io"
 teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
 logo                     : # path of logo image to display in the masthead, e.g. "/assets/images/88x88.png"
 masthead_title           : # overrides the website title displayed in the masthead, use " " for no title
@@ -230,7 +230,7 @@ defaults:
       share: true
       related: false
       sidebar:
-        nav: "chainbrake"
+        nav: "brianmechanism"
   # _pages
   - scope:
       path: "_pages"

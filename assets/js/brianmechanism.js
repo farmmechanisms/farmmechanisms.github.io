@@ -3,7 +3,7 @@ function degree2Pi(degrees) {
     return degrees * (pi / 180);
 }
 
-class chainBrakeSimulator {
+class BrianMechanismSimulator {
     chainParams = {
         centerDistance: 6,
         rivetDia: 1.8,

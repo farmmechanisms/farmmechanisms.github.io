@@ -6,7 +6,7 @@ header:
   overlay_image: /assets/images/transparent.png
   actions:
     - label: "<i class='fas fa-arrow-right'></i> Learn More"
-      url: "/chainbrake/"
+      url: "/brianmechanism/"
     - label: "<i class='fas fa-download'></i> Try Simulator"
       url: "/simulator/"
 excerpt: >

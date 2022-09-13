@@ -1,4 +1,4 @@
-# Brian Mechanism Website
+# Farm Mechanisms Website
 
 
 ## Usage
@@ -7,4 +7,3 @@ bundle install
 bundle clean --force
 jekyll serve
 ```
-=======
